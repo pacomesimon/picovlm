@@ -1,5 +1,5 @@
 ---
-title: VibeLabel
+title: picovlm
 emoji: 📚
 colorFrom: pink
 colorTo: blue
@@ -9,9 +9,9 @@ app_file: app.py
 pinned: false
 ---
 
-# VibeLabel
+# picovlm
 
-VibeLabel is an application designed for object detection.
+picovlm is an application designed for object detection.
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ To run the application locally using Docker, execute the following command in yo
 
 ```bash
 docker run -it -p 7860:7860 --platform=linux/amd64 \
-	registry.hf.space/pacomesimon-vibelabel:latest python app.py
+	registry.hf.space/pacomesimon-picovlm:latest python app.py
 ```
 
 Once the container is started, the application will be accessible at `http://localhost:7860`.
@@ -32,8 +32,8 @@ Running locally is potentially dangerous. Make sure to review this Space code be
 
 ```bash
 # Clone repository
-git clone https://huggingface.co/spaces/pacomesimon/vibeLabel
-cd vibeLabel
+git clone https://huggingface.co/spaces/pacomesimon/picovlm
+cd picovlm
 
 # Create and activate Python environment
 python -m venv env

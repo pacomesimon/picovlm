@@ -5,8 +5,6 @@ import torch
 import numpy as np
 import pandas as pd
 import json
-from google import genai
-from google.genai import types
 from PIL import Image
 from ultralytics import YOLO
 from .utils import batch_iterable
@@ -156,94 +154,3 @@ def set_classes_and_save_model(df, neg_df=None, model_name='yoloe-11s-seg.pt'):
     model_instance = set_classes_with_descriptions(df, neg_df, model_name)
     status = f'**Status:** <span style="color: #00ffcc;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Model Prompted successfully!</span>'
     return model_instance, save_model(model_instance, model_name), status
-
-def refine_prompts_with_gemini(prompts_df, output_images, api_key_input=None):
-    """
-    Refines prompts using Gemini based on previous prompts and detection results.
-    """
-    # Prioritize user input API key, fallback to environment variable
-    api_key = api_key_input or False #os.environ.get("GEMINI_API_KEY")
-    
-    if not api_key:
-        status = f'**Status:** <span style="color: #ff4444;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Error - No Gemini API Key provided.</span>'
-        return prompts_df, status
-
-    client = genai.Client(api_key=api_key)
-
-    # Convert prompts_df to dict
-    prompts_dict = prompts_df.to_dict(orient='list')
-    cleaned_prompts = {k: [v for v in l if pd.notna(v) and v != ""] for k, l in prompts_dict.items()}
-
-    # Create the function declaration for Gemini
-    properties = {
-        k: {
-            "type": "STRING", 
-            "description": f"A better, more descriptive prompt for the class '{k}' to improve detection accuracy."
-        } for k in cleaned_prompts.keys()
-    }
-    
-    declaration = {
-        "name": "update_prompts",
-        "description": "Updates the prompts for target classes based on visual feedback from previous detections.",
-        "parameters": {
-            "type": "OBJECT",
-            "properties": properties,
-            "required": list(cleaned_prompts.keys())
-        }
-    }
-
-    # Prepare visual context
-    contents = [
-        "I am working on an object detection task. Here are the current prompts/descriptions for each class:",
-        json.dumps(cleaned_prompts, indent=2),
-        "Based on the provided images (which show the current detection results with bounding boxes), "
-        "please refine the prompts to be more specific and helpful for the detection model. "
-        "Use the 'update_prompts' function to return the new prompts."
-    ]
-
-    if output_images:
-        for item in output_images:
-            img_data = item
-            if isinstance(item, (list, tuple)):
-                img_data = item[0]
-            
-            if isinstance(img_data, np.ndarray):
-                img = Image.fromarray(img_data.astype('uint8'))
-                contents.append(img)
-            elif isinstance(img_data, str) and os.path.exists(img_data):
-                img = Image.open(img_data)
-                contents.append(img)
-
-    # Call Gemini
-    try:
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview", # Using a stable model name compatible with the new SDK
-            contents=contents,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(
-                    function_declarations=[declaration]
-                )],
-                tool_config=types.ToolConfig(
-                    function_calling_config=types.FunctionCallingConfig(
-                        mode="ANY",
-                        allowed_function_names=["update_prompts"]
-                    )
-                )
-            )
-        )
-        
-        # Extract the function call
-        for part in response.candidates[0].content.parts:
-            if part.function_call:
-                new_prompts_map = dict(part.function_call.args)
-                new_df_data = {k: [new_prompts_map.get(k, "")] for k in prompts_df.columns}
-                new_df = pd.DataFrame(new_df_data)
-                status = f'**Status:** <span style="color: #00ffcc;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Prompts Refined via AI</span>'
-                return new_df, status
-                
-    except Exception as e:
-        status = f'**Status:** <span style="color: #ff4444;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Error during Gemini refinement: {str(e)}</span>'
-        return prompts_df, status
-
-    status = f'**Status:** <span style="color: #ffbb33;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Gemini completed but no changes were made.</span>'
-    return prompts_df, status

@@ -1,7 +1,7 @@
 import gradio as gr
 import pandas as pd
 import os
-from .core import detect_objects_stream, set_classes_and_save_model, refine_prompts_with_gemini
+from .core import detect_objects_stream, set_classes_and_save_model
 from .core import MODEL_NAMES
 from .utils import zip_folder
 
@@ -124,7 +124,7 @@ def create_demo():
     }
     """
 
-    with gr.Blocks(title="VibeLabel - Multi-Modal Labeling", theme=gr.themes.Soft(primary_hue="gray", neutral_hue="slate"), css=css) as demo:
+    with gr.Blocks(title="picovlm - Multi-Modal Labeling", theme=gr.themes.Soft(primary_hue="gray", neutral_hue="slate"), css=css) as demo:
         model_state = gr.State([])  # Store the model as a state variable
         annotations_folder_state = gr.State([])
 
@@ -158,16 +158,8 @@ def create_demo():
                         label="Negative Class Descriptions (emb * -1)",
                         wrap=True
                     )
- 
-                gemini_api_key = gr.Textbox(
-                    label="Gemini API Key",
-                    placeholder="Enter your API Key here...",
-                    type="password",
-                )
-                
                 with gr.Row():
                     set_classes_button = gr.Button("Prompt Model", variant="secondary")
-                    refine_btn = gr.Button("AI Refine", variant="secondary")
                 
                 gr.Markdown("---")
                 gr.Markdown("### Inference Settings")
@@ -241,12 +233,6 @@ def create_demo():
             fn=cleanup_temp_model,
             inputs=download_output,
             outputs=None
-        )
-        
-        refine_btn.click(
-            fn=refine_prompts_with_gemini,
-            inputs=[prompts_table, output_gallery, gemini_api_key],
-            outputs=[prompts_table, model_status]
         )
 
         # Image Handling
