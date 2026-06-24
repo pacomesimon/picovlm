@@ -163,7 +163,7 @@ def create_demo():
                 
                 gr.Markdown("---")
                 gr.Markdown("### Inference Settings")
-                conf_slider = gr.Slider(0.0, 1.0, value=0.005, step=0.001, label="Confidence Threshold")
+                conf_slider = gr.Slider(0.01, 1.0, value=0.01, step=0.005, label="Confidence Threshold")
                 batch_slider = gr.Slider(1, 8, value=2, step=1, label="Batch Size")
                 
                 gr.Markdown("---")
