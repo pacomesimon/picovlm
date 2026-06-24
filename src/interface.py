@@ -1,7 +1,7 @@
 import gradio as gr
 import pandas as pd
 import os
-from .core import detect_objects_stream, set_classes_and_save_model
+from .core import detect_objects_stream, set_classes_and_save_model, compress_and_export_model
 from .core import MODEL_NAMES
 from .utils import zip_folder
 
@@ -173,6 +173,21 @@ def create_demo():
                     interactive=False,
                     height="auto",
                 )
+                
+                gr.Markdown("---")
+                with gr.Accordion("Model Compression", open=False):
+                    quant_type = gr.Radio(
+                        choices=["Half Quantization (FP16)", "Int8 Quantization"],
+                        value="Half Quantization (FP16)",
+                        label="Quantization Type"
+                    )
+                    compress_button = gr.Button("Compress & Export", variant="secondary")
+                    download_compressed = gr.File(
+                        label="Download Compressed Model (.onnx)",
+                        value=os.path.join("assets", "_"),
+                        interactive=False,
+                        height="auto",
+                    )
  
             # --- MAIN AREA (Workspace) ---
             with gr.Column(scale=3, elem_classes=["glass-card"]):
@@ -254,6 +269,12 @@ def create_demo():
             fn=zip_folder,
             inputs=[annotations_folder_state],
             outputs=[download_annotations]
+        )
+
+        compress_button.click(
+            fn=compress_and_export_model,
+            inputs=[model_state, quant_type],
+            outputs=[download_compressed, model_status]
         )
 
     return demo

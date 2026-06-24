@@ -154,3 +154,32 @@ def set_classes_and_save_model(df, neg_df=None, model_name='yoloe-11s-seg.pt'):
     model_instance = set_classes_with_descriptions(df, neg_df, model_name)
     status = f'**Status:** <span style="color: #00ffcc;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Model Prompted successfully!</span>'
     return model_instance, save_model(model_instance, model_name), status
+
+def compress_and_export_model(model_instance, quantization_type):
+    if model_instance is None or isinstance(model_instance, list):
+        status = f'**Status:** <span style="color: #ff4444;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Error - Model is not prompted yet. Please click "Prompt Model" first.</span>'
+        return os.path.join("assets", "_"), status
+
+    try:
+        half_val = (quantization_type == "Half Quantization (FP16)")
+        int8_val = (quantization_type == "Int8 Quantization")
+        
+        # Export the model
+        exported_path = model_instance.export(
+            optimize=True,
+            device="cpu",
+            half=half_val,
+            int8=int8_val,
+            format="onnx"
+        )
+        
+        if exported_path and os.path.exists(exported_path):
+            status = f'**Status:** <span style="color: #00ffcc;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Model compressed and exported successfully!</span>'
+            return exported_path, status
+        else:
+            raise Exception("Export succeeded but output file was not found.")
+            
+    except Exception as e:
+        status = f'**Status:** <span style="color: #ff4444;">{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Error during compression: {str(e)}</span>'
+        return os.path.join("assets", "_"), status
+

@@ -6,12 +6,14 @@ __pycache__/
 # Pytorch model
 *.pt
 *.ts
+*.onnx
 
 # .gradio folder
 .gradio
 
 # runs
 runs/
+datasets/
 
 # C extensions
 *.so
