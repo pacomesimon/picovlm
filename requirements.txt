@@ -1,0 +1,8 @@
+gradio==6.1.0
+matplotlib==3.6.0
+numpy==1.26.4
+opencv_python==4.9.0.80
+pandas==2.3.3
+torch==2.12.0
+ultralytics==8.3.235
+google-genai
